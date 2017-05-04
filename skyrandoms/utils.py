@@ -3,7 +3,31 @@ from __future__ import division, print_function
 import numpy as np
 from astropy import units as u
 
-__all__ = ['random_radec', 'check_random_state']
+__all__ = ['solid_angle', 'random_radec', 'check_random_state']
+
+
+def solid_angle(ralim, declim):
+    """
+    Calculate solid angle with given ra & dec range.
+    All angles in degrees.
+    
+    Parameters
+    ----------
+    ralim : list-like, optional
+        ra limits.
+    declim : list-like, optional
+        dec limits.
+
+    Returns
+    -------
+    area : float
+        Solid angle in square degrees.
+    """
+    ralim = np.deg2rad(np.asarray(ralim))
+    declim = np.deg2rad(np.asarray(declim))
+    dsin_dec = np.sin(declim[1]) - np.sin(declim[0])
+    area = ralim.ptp() * dsin_dec * (180.0/np.pi)**2
+    return area
 
 
 def random_radec(npoints, ralim=[0, 360], 
