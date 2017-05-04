@@ -6,16 +6,16 @@ from astropy import units as u
 __all__ = ['solid_angle', 'random_radec', 'check_random_state']
 
 
-def solid_angle(ralim, declim):
+def solid_angle(ra_lim, dec_lim):
     """
     Calculate solid angle with given ra & dec range.
     All angles in degrees.
     
     Parameters
     ----------
-    ralim : list-like, optional
+    ra_lim : list-like, optional
         ra limits.
-    declim : list-like, optional
+    dec_lim : list-like, optional
         dec limits.
 
     Returns
@@ -23,15 +23,15 @@ def solid_angle(ralim, declim):
     area : float
         Solid angle in square degrees.
     """
-    ralim = np.deg2rad(np.asarray(ralim))
-    declim = np.deg2rad(np.asarray(declim))
-    dsin_dec = np.sin(declim[1]) - np.sin(declim[0])
-    area = ralim.ptp() * dsin_dec * (180.0/np.pi)**2
+    ra_lim = np.deg2rad(np.asarray(ra_lim))
+    dec_lim = np.deg2rad(np.asarray(dec_lim))
+    dsin_dec = np.sin(dec_lim[1]) - np.sin(dec_lim[0])
+    area = ra_lim.ptp() * dsin_dec * (180.0/np.pi)**2
     return area
 
 
-def random_radec(npoints, ralim=[0, 360], 
-                 declim=[-90, 90], random_state=None):
+def random_radec(npoints, ra_lim=[0, 360], 
+                 dec_lim=[-90, 90], random_state=None):
     """
     Generate random ra and dec points within a specified range.
     All angles in degrees.
@@ -40,9 +40,9 @@ def random_radec(npoints, ralim=[0, 360],
     ----------
     npoints : int
         Number of random points to generate.
-    ralim : list-like, optional
+    ra_lim : list-like, optional
         ra limits.
-    declim : list-like, optional
+    dec_lim : list-like, optional
         dec limits.
     random_state : `None`, int, list of ints, or `numpy.random.RandomState`
         If ``seed`` is `None`, return the `~numpy.random.RandomState`
@@ -56,12 +56,12 @@ def random_radec(npoints, ralim=[0, 360],
         Random ra and dec points in degrees.
     """
     rng = check_random_state(random_state)
-    ralim = np.deg2rad(np.asarray(ralim))
-    declim = np.deg2rad(np.asarray(declim))
+    ra_lim = np.deg2rad(np.asarray(ra_lim))
+    dec_lim = np.deg2rad(np.asarray(dec_lim))
 
-    zlim = np.sin(declim)
+    zlim = np.sin(dec_lim)
     z = zlim[0] + zlim.ptp() * rng.uniform(size=int(npoints))
-    ra = ralim[0] + ralim.ptp() * rng.uniform(size=int(npoints))
+    ra = ra_lim[0] + ra_lim.ptp() * rng.uniform(size=int(npoints))
     dec = np.arcsin(z)
     return np.rad2deg(ra), np.rad2deg(dec)
 
