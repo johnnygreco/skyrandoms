@@ -2,6 +2,7 @@ from __future__ import division, print_function
 
 import os
 import numpy as np
+import pandas as pd
 
 import sqlalchemy as sq
 import sqlalchemy.ext.declarative 
@@ -21,10 +22,8 @@ class SkyRandomsFactory(object):
     """
 
     def __init__(self, ra_lim=[0,360], dec_lim=[-90,90], random_state=None):
-        self.ra_lim = np.asarray(ra_lim)
-        self.dec_lim = np.asarray(dec_lim)
         self.rng = utils.check_random_state(random_state)
-        self._area = None
+        self.set_sky_limits(ra_lim, dec_lim)
     
     @property
     def area(self):
@@ -49,6 +48,11 @@ class SkyRandomsFactory(object):
     def dec_lim(self, lim):
         assert lim[0]>=-90 and lim[1]<=90, 'dec must be in [-90, 90]'
         self._dec_lim = lim
+
+    def set_sky_limits(self, ra_lim, dec_lim):
+        self.ra_lim = np.asarray(ra_lim)
+        self.dec_lim = np.asarray(dec_lim)
+        self._area = None
 
     def draw_randoms(self, npoints=1, density=None, as_df=True):
         if density is not None:
@@ -86,6 +90,7 @@ class SkyRandomsDatabase(SkyRandomsFactory):
         self.db_fn = db_fn
 
         if overwrite and os.path.isfile(db_fn):
+            assert 'safe' not in db_fn, 'cannot delete safe file'
             os.remove(db_fn)
 
         # create engine 
@@ -110,13 +115,35 @@ class SkyRandomsDatabase(SkyRandomsFactory):
         ra, dec = self.draw_randoms(npoints=1)
         self.add_single(id, ra, dec)
 
-    def add_random_batch(self, npoints=1, density=None):
+    def add_random_batch(self, npoints=1, density=None, chunk_size=1e6):
         if density is not None:
             npoints = round(density*self.area, 0)
-        randoms = self.draw_randoms(npoints, as_df=True)
-        last_id = self.get_last_id()
-        last_id = last_id if last_id else 0
-        randoms['id'] = np.arange(len(randoms)) + 1 + last_id
-        randoms['detected'] = 0
-        randoms.to_sql(
-            'skyrandoms', self.engine, if_exists='append', index=False)
+        num_chunks, remainder = _get_chunks(chunk_size, npoints)
+        for n in range(num_chunks):
+            randoms = self.draw_randoms(int(chunk_size), as_df=True)
+            last_id = self.get_last_id()
+            last_id = last_id if last_id else 0
+            randoms['id'] = np.arange(len(randoms)) + 1 + last_id
+            randoms['detected'] = 0
+            randoms.to_sql(
+                'skyrandoms', self.engine, if_exists='append', index=False)
+        if remainder>0:
+            randoms = self.draw_randoms(remainder, as_df=True)
+            last_id = self.get_last_id()
+            last_id = last_id if last_id else 0
+            randoms['id'] = np.arange(len(randoms)) + 1 + last_id
+            randoms['detected'] = 0
+            randoms.to_sql(
+                'skyrandoms', self.engine, if_exists='append', index=False)
+
+    def query_region(self, ra_lim, dec_lim):
+        cut = (SkyRandoms.ra>ra_lim[0]) & (SkyRandoms.ra<ra_lim[1])
+        cut &= (SkyRandoms.dec>dec_lim[0]) & (SkyRandoms.dec<dec_lim[1])
+        query_statment = self.session.query(SkyRandoms).filter(cut).statement
+        return pd.read_sql(query_statment, self.engine)
+
+
+def _get_chunks(chunk_size, total_size):
+    remainder = int(total_size % chunk_size)
+    num_chunks = int(total_size // chunk_size)
+    return num_chunks, remainder
