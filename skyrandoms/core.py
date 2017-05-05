@@ -88,6 +88,7 @@ class SkyRandomsDatabase(SkyRandomsFactory):
 
         super(SkyRandomsDatabase, self).__init__(**kwargs)
         self.db_fn = db_fn
+        self.total_area = 0
 
         if overwrite and os.path.isfile(db_fn):
             assert 'safe' not in db_fn, 'cannot delete safe file'
@@ -135,6 +136,9 @@ class SkyRandomsDatabase(SkyRandomsFactory):
             randoms['detected'] = 0
             randoms.to_sql(
                 'skyrandoms', self.engine, if_exists='append', index=False)
+
+    def update_total_area(self):
+        self.total_area += self.area
 
     def query_region(self, ra_lim, dec_lim):
         cut = (SkyRandoms.ra>ra_lim[0]) & (SkyRandoms.ra<ra_lim[1])
