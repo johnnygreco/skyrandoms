@@ -16,7 +16,7 @@ args = parser.parse_args()
 randoms_density =  args.density # per deg^2
 prefix = args.prefix
 db_name = dbdir+prefix+'-{}.db'.format(randoms_density)
-db = SkyRandomsDatabase(db_fn=db_name)
+db = SkyRandomsDatabase(db_fn=db_name, overwrite=True)
 
 print('generating', randoms_density, 'randoms per deg^2\n')
 for fp in hsc.values():
