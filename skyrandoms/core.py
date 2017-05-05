@@ -2,7 +2,6 @@ from __future__ import division, print_function
 
 import os
 import numpy as np
-import pandas as pd
 
 import sqlalchemy as sq
 import sqlalchemy.ext.declarative 
@@ -51,17 +50,13 @@ class SkyRandomsFactory(object):
         assert lim[0]>=-90 and lim[1]<=90, 'dec must be in [-90, 90]'
         self._dec_lim = lim
 
-    def draw_randoms(self, npoints=1, density=None, as_df=False):
+    def draw_randoms(self, npoints=1, density=None, as_df=True):
         if density is not None:
             npoints = round(density*self.area, 0)
-        ra, dec = utils.random_radec(
-            npoints, self.ra_lim, self.dec_lim, random_state=self.rng)
-        if as_df:
-            df = pd.DataFrame(
-                data=np.array([ra, dec]).T, columns=['ra', 'dec'])
-            return df
-        else:
-            return ra, dec
+        points = utils.random_radec(
+            npoints, self.ra_lim, self.dec_lim, 
+            random_state=self.rng, as_df=as_df)
+        return points
 
 
 class SkyRandoms(Base):

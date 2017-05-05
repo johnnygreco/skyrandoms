@@ -1,6 +1,7 @@
 from __future__ import division, print_function
 
 import numpy as np
+import pandas as pd
 from astropy import units as u
 
 __all__ = ['solid_angle', 'random_radec', 'check_random_state']
@@ -30,8 +31,8 @@ def solid_angle(ra_lim, dec_lim):
     return area
 
 
-def random_radec(npoints, ra_lim=[0, 360], 
-                 dec_lim=[-90, 90], random_state=None):
+def random_radec(npoints, ra_lim=[0, 360], dec_lim=[-90, 90], 
+                 random_state=None, as_df=True):
     """
     Generate random ra and dec points within a specified range.
     All angles in degrees.
@@ -50,9 +51,12 @@ def random_radec(npoints, ra_lim=[0, 360],
         return a new `~numpy.random.RandomState` instance seeded with
         ``seed``.  If ``seed`` is already a `~numpy.random.RandomState`,
         return it.  Otherwise raise ``ValueError``.
+    as_df : bool
+        If True, return as pandas DataFrame.
+
     Returns
     -------
-    points : 2d ndarray
+    points : 2d ndarray of pandas DataFrame
         Random ra and dec points in degrees.
     """
     rng = check_random_state(random_state)
@@ -63,7 +67,14 @@ def random_radec(npoints, ra_lim=[0, 360],
     z = zlim[0] + zlim.ptp() * rng.uniform(size=int(npoints))
     ra = ra_lim[0] + ra_lim.ptp() * rng.uniform(size=int(npoints))
     dec = np.arcsin(z)
-    return np.rad2deg(ra), np.rad2deg(dec)
+    ra, dec = np.rad2deg(ra), np.rad2deg(dec)
+    points = np.array([ra, dec]).T
+
+    if as_df:
+        df = pd.DataFrame(data=points, columns=['ra', 'dec'])
+        return df
+    else:
+        return points
 
 
 def check_random_state(seed):
