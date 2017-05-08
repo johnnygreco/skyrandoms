@@ -161,6 +161,10 @@ class SkyRandomsDatabase(SkyRandomsFactory):
         query.update({SkyRandoms.detected: 1}, 'fetch')
         self.session.commit()
 
+    def set_all_undetected(self):
+        self.session.query(SkyRandoms).update({SkyRandoms.detected: 0})
+        self.session.commit()
+
 
 def _get_chunks(chunk_size, total_size):
     remainder = int(total_size % chunk_size)
