@@ -156,9 +156,9 @@ class SkyRandomsDatabase(SkyRandomsFactory):
     def set_detected(self, ids):
         if type(ids)==int:
             ids = [ids]
-        filter_statement =  SkyRandoms.id.in_(ids)
-        query = self.session.query(SkyRandoms).filter(filter_statement)
-        query.update({SkyRandoms.detected: 1}, 'fetch')
+        for _id in ids:
+            self.session.query(SkyRandoms).filter(SkyRandoms.id==_id).update(
+                {SkyRandoms.detected: 1})
         self.session.commit()
 
     def set_all_undetected(self):
