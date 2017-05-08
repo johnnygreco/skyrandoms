@@ -54,7 +54,7 @@ class SkyRandomsFactory(object):
         self.dec_lim = np.asarray(dec_lim)
         self._area = None
 
-    def draw_randoms(self, npoints=1, density=None, as_df=True):
+    def draw(self, npoints=1, density=None, as_df=True):
         if density is not None:
             npoints = round(density*self.area, 0)
         points = utils.random_radec(
@@ -111,17 +111,17 @@ class SkyRandomsDatabase(SkyRandomsFactory):
         self.session.add(SkyRandoms(id=id, ra=ra, dec=dec, detected=0))
         self.session.commit()
 
-    def add_random_single(self):
+    def add_single(self):
         id = self.get_last_id() + 1
-        ra, dec = self.draw_randoms(npoints=1)
+        ra, dec = self.draw(npoints=1)
         self.add_single(id, ra, dec)
 
-    def add_random_batch(self, npoints=1, density=None, chunk_size=1e6):
+    def add_batch(self, npoints=1, density=None, chunk_size=1e6):
         if density is not None:
             npoints = round(density*self.area, 0)
         num_chunks, remainder = _get_chunks(chunk_size, npoints)
         for n in range(num_chunks):
-            randoms = self.draw_randoms(int(chunk_size), as_df=True)
+            randoms = self.draw(int(chunk_size), as_df=True)
             last_id = self.get_last_id()
             last_id = last_id if last_id else 0
             randoms['id'] = np.arange(len(randoms)) + 1 + last_id
@@ -129,7 +129,7 @@ class SkyRandomsDatabase(SkyRandomsFactory):
             randoms.to_sql(
                 'skyrandoms', self.engine, if_exists='append', index=False)
         if remainder>0:
-            randoms = self.draw_randoms(remainder, as_df=True)
+            randoms = self.draw(remainder, as_df=True)
             last_id = self.get_last_id()
             last_id = last_id if last_id else 0
             randoms['id'] = np.arange(len(randoms)) + 1 + last_id
@@ -145,6 +145,21 @@ class SkyRandomsDatabase(SkyRandomsFactory):
         cut &= (SkyRandoms.dec>dec_lim[0]) & (SkyRandoms.dec<dec_lim[1])
         query_statment = self.session.query(SkyRandoms).filter(cut).statement
         return pd.read_sql(query_statment, self.engine)
+
+    def get_randoms(self, ids):
+        if type(ids)==int:
+            ids = [ids]
+        filter_statement =  SkyRandoms.id.in_(ids)
+        query = self.session.query(SkyRandoms).filter(filter_statement)
+        return pd.read_sql_query(query.selectable, self.engine)
+
+    def set_detected(self, ids):
+        if type(ids)==int:
+            ids = [ids]
+        filter_statement =  SkyRandoms.id.in_(ids)
+        query = self.session.query(SkyRandoms).filter(filter_statement)
+        query.update({SkyRandoms.detected: 1}, 'fetch')
+        self.session.commit()
 
 
 def _get_chunks(chunk_size, total_size):

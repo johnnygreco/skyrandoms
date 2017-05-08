@@ -25,6 +25,6 @@ for fp in hsc.values():
     print('ra limits = {}, dec limit = {}'.format(db.ra_lim, db.dec_lim))
     print('solid angle = {:.2f} deg^2'.format(db.area))
     print('N randoms =', int(db.area*randoms_density), '\n')
-    db.add_random_batch(density=randoms_density)
+    db.add_batch(density=randoms_density)
     db.update_total_area()
 print('total area covered by randoms = {:.2f} deg^2'.format(db.total_area))
