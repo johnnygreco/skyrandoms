@@ -78,6 +78,10 @@ class SkyRandoms(Base):
         return '<SkyRandoms(id={}, ra={}, dec={}, detected={})>'.format(
             self.id, self.ra, self.dec, self.detected)
 
+    def __reduce__(self):
+        """Return state information for pickling"""
+        return self.__class__, (int(self.hash_code), str(self.file_pointer))
+
 
 class SkyRandomsDatabase(SkyRandomsFactory):
     """
