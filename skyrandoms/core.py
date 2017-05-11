@@ -109,16 +109,14 @@ class SkyRandomsDatabase(SkyRandomsFactory):
         self.session = self.Session()
 
     def get_last_id(self):
-        return self.session.query(func.max(SkyRandoms.id)).first()[0]
-
-    def add_single(self, id, ra, dec):
-        self.session.add(SkyRandoms(id=id, ra=ra, dec=dec, detected=0))
-        self.session.commit()
+        last_id = self.session.query(func.max(SkyRandoms.id)).first()[0]
+        return last_id if last_id else 0
 
     def add_single(self):
         id = self.get_last_id() + 1
-        ra, dec = self.draw(npoints=1)
-        self.add_single(id, ra, dec)
+        ra, dec = self.draw(npoints=1, as_df=False)[0]
+        self.session.add(SkyRandoms(id=id, ra=ra, dec=dec, detected=0))
+        self.session.commit()
 
     def add_batch(self, npoints=1, density=None, chunk_size=1e6):
         if density is not None:
@@ -126,17 +124,13 @@ class SkyRandomsDatabase(SkyRandomsFactory):
         num_chunks, remainder = _get_chunks(chunk_size, npoints)
         for n in range(num_chunks):
             randoms = self.draw(int(chunk_size), as_df=True)
-            last_id = self.get_last_id()
-            last_id = last_id if last_id else 0
-            randoms['id'] = np.arange(len(randoms)) + 1 + last_id
+            randoms['id'] = np.arange(len(randoms)) + 1 + self.get_last_id()
             randoms['detected'] = 0
             randoms.to_sql(
                 'skyrandoms', self.engine, if_exists='append', index=False)
         if remainder>0:
             randoms = self.draw(remainder, as_df=True)
-            last_id = self.get_last_id()
-            last_id = last_id if last_id else 0
-            randoms['id'] = np.arange(len(randoms)) + 1 + last_id
+            randoms['id'] = np.arange(len(randoms)) + 1 + self.get_last_id()
             randoms['detected'] = 0
             randoms.to_sql(
                 'skyrandoms', self.engine, if_exists='append', index=False)
