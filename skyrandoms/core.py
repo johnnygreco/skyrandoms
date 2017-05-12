@@ -78,21 +78,19 @@ class SkyRandoms(Base):
         return '<SkyRandoms(id={}, ra={}, dec={}, detected={})>'.format(
             self.id, self.ra, self.dec, self.detected)
 
-    def __reduce__(self):
-        """Return state information for pickling"""
-        return self.__class__, (int(self.hash_code), str(self.file_pointer))
-
 
 class SkyRandomsDatabase(SkyRandomsFactory):
     """
     Sky randoms database manager.
     """
 
-    def __init__(self, db_fn='skyrandoms.db', overwrite=False, **kwargs):
+    def __init__(self, db_fn='skyrandoms.db', overwrite=False, ra_lim=[0,360], 
+                 dec_lim=[-90,90], random_state=None):
 
-        super(SkyRandomsDatabase, self).__init__(**kwargs)
+        super(SkyRandomsDatabase, self).__init__(ra_lim, dec_lim, random_state)
         self.db_fn = db_fn
         self.total_area = 0
+        self.overwrite = overwrite
 
         if overwrite and os.path.isfile(db_fn):
             assert 'safe' not in db_fn, 'cannot delete safe file'
@@ -162,6 +160,12 @@ class SkyRandomsDatabase(SkyRandomsFactory):
     def set_all_undetected(self):
         self.session.query(SkyRandoms).update({SkyRandoms.detected: 0})
         self.session.commit()
+
+    def __reduce__(self):
+        """Return state information for pickling"""
+        state = (self.db_fn, self.overwrite, self.ra_lim, 
+                 self.dec_lim, self.rng)
+        return self.__class__, state
 
 
 def _get_chunks(chunk_size, total_size):
