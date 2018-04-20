@@ -70,7 +70,7 @@ class SkyRandoms(Base):
 
     __tablename__ = 'skyrandoms'
     id = sq.Column(sq.Integer, primary_key=True)
-    ra = sq.Column(sq.Float, index=True)
+    ra = sq.Column(sq.Float, nullable=False)
     dec = sq.Column(sq.Float, nullable=False)
     detected = sq.Column(sq.Integer, nullable=False)
 

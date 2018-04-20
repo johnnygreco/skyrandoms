@@ -1,7 +1,7 @@
 from collections import OrderedDict, namedtuple
 FootPrint = namedtuple('FootPrint', 'region ra_lim dec_lim') 
 
-__all__ = ['hsc']
+__all__ = ['hsc', 'synths_9451']
 
 hsc = OrderedDict([
     ('r1', FootPrint(region=1, ra_lim=[28, 42], dec_lim=[-8, -1])),
@@ -11,3 +11,5 @@ hsc = OrderedDict([
     ('r5', FootPrint(region=5, ra_lim=[234, 250], dec_lim=[41, 45])),
     ('r6', FootPrint(region=6, ra_lim=[328, 346], dec_lim=[-2, 4]))
 ])
+
+synths_9451 = FootPrint(region=6, ra_lim=[328, 346], dec_lim=[-2, 4])
