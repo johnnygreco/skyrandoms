@@ -153,7 +153,7 @@ class SkyRandomsDatabase(SkyRandomsFactory):
         if type(ids)==int:
             ids = [ids]
         for _id in ids:
-            self.session.query(SkyRandoms).filter(SkyRandoms.id==_id).update(
+            self.session.query(SkyRandoms).filter(SkyRandoms.id==int(_id)).update(
                 {SkyRandoms.detected: 1})
         self.session.commit()
 
