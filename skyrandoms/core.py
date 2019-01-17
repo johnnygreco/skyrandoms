@@ -133,6 +133,33 @@ class SkyRandomsDatabase(SkyRandomsFactory):
             randoms.to_sql(
                 'skyrandoms', self.engine, if_exists='append', index=False)
 
+    def add_batch_min_sep(self, npoints=1, density=None, min_sep=12):
+
+        if density is not None:
+            npoints = round(density*self.area, 0)
+
+        count = 0
+        min_sep /= 3600.0 # min_sep must be in arcsec
+        while count < npoints:
+            if count == 0:
+                ra, dec = self.draw(npoints=1, as_df=False)[0]
+                id = self.get_last_id() + 1
+                self.session.add(SkyRandoms(id=id, ra=ra, dec=dec, detected=0))
+                self.session.commit()
+                count += 1
+            else:
+                ra, dec = self.draw(npoints=1, as_df=False)[0]
+                cos_dec = np.cos(dec * np.pi / 180.0)
+                ra_lim = [ra - min_sep / cos_dec, ra + min_sep / cos_dec]
+                dec_lim = [dec - min_sep, dec + min_sep]
+                friends = self.query_region(ra_lim, dec_lim)
+                if len(friends) == 0:
+                    id = self.get_last_id() + 1
+                    self.session.add(
+                            SkyRandoms(id=id, ra=ra, dec=dec, detected=0))
+                    self.session.commit()
+                    count += 1
+                
     def update_total_area(self):
         self.total_area += self.area
 

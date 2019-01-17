@@ -94,3 +94,4 @@ ENV/
 .DS_Store
 local_data
 *.db
+pytest_session.txt
