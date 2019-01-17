@@ -6,9 +6,8 @@ except ImportError:
     from distutils.core import setup
 
 setup(name='skyrandoms',
-      version='v0.1',
+      version='0.1',
       author='Johnny Greco',
-      author_email='jgreco@astro.princeton.edu',
       packages=['skyrandoms'],
       url='https://github.com/johnnygreco/skyrandoms',
       description='build a database of random ra & decs')
